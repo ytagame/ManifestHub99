@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ManifestHub 清单调用助手</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0f172a;
+      --panel: #111827;
+      --accent: #38bdf8;
+      --accent-strong: #0ea5e9;
+      --muted: #9ca3af;
+      --error: #f87171;
+      --success: #4ade80;
+      font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(56, 189, 248, 0.12), transparent 25%),
+        radial-gradient(circle at 80% 0%, rgba(14, 165, 233, 0.14), transparent 22%),
+        var(--bg);
+      min-height: 100vh;
+      color: #e5e7eb;
+    }
+
+    header {
+      padding: 32px 20px 12px;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 34px);
+      color: #f8fafc;
+      letter-spacing: -0.02em;
+    }
+
+    p.lead {
+      margin: 0;
+      color: var(--muted);
+      max-width: 720px;
+      line-height: 1.6;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 0 auto 48px;
+      padding: 0 20px 40px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 18px;
+    }
+
+    .card {
+      background: linear-gradient(145deg, rgba(255, 255, 255, 0.02), rgba(255, 255, 255, 0));
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      border-radius: 16px;
+      padding: 18px;
+      backdrop-filter: blur(8px);
+    }
+
+    .card h2 {
+      margin: 0 0 10px;
+      font-size: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input, textarea {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      color: #f1f5f9;
+      padding: 12px;
+      font-size: 15px;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.18);
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 12px 16px;
+      background: linear-gradient(120deg, var(--accent-strong), #22d3ee);
+      color: #0b1224;
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      transition: transform 0.12s ease, filter 0.12s ease, box-shadow 0.12s ease;
+      box-shadow: 0 12px 30px rgba(14, 165, 233, 0.35);
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      filter: brightness(1.05);
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      font-size: 13px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--muted);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .status {
+      font-size: 14px;
+      color: var(--muted);
+      min-height: 20px;
+    }
+
+    pre {
+      margin: 0;
+      background: #0b1224;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 12px;
+      padding: 14px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    code {
+      font-family: "SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    }
+
+    .result-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .url-preview {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px dashed rgba(255, 255, 255, 0.08);
+      padding: 10px 12px;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .tips {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .tip {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 12px;
+      border-radius: 12px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .tip strong {
+      color: #e5e7eb;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(74, 222, 128, 0.12);
+      color: #bbf7d0;
+      border: 1px solid rgba(74, 222, 128, 0.3);
+    }
+
+    @media (min-width: 800px) {
+      .grid.two-columns {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Steam 清单调用助手</h1>
+    <p class="lead">基于 ManifestHub API 的快速调用页面，输入 API Key、Depot ID 与 Manifest ID，即可直接获取清单数据。无需额外依赖，文件可离线保存。</p>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>输入参数</h2>
+      <form id="manifest-form" class="grid two-columns" autocomplete="on">
+        <div class="field">
+          <label for="apiKey">API Key</label>
+          <input id="apiKey" name="apiKey" placeholder="必填，24 小时有效的 API Key" required />
+        </div>
+        <div class="field">
+          <label for="depotId">Depot ID</label>
+          <input id="depotId" name="depotId" inputmode="numeric" pattern="\\d*" placeholder="例如：228980" required />
+        </div>
+        <div class="field">
+          <label for="manifestId">Manifest ID</label>
+          <input id="manifestId" name="manifestId" inputmode="numeric" pattern="\\d*" placeholder="需要调用的 manifest id" required />
+        </div>
+        <div class="field">
+          <label for="note">备注（可选）</label>
+          <input id="note" name="note" placeholder="给自己或团队的标记，不会参与请求" />
+        </div>
+        <div class="toolbar" style="grid-column: 1 / -1;">
+          <button type="submit" id="submitBtn">调用清单</button>
+          <button type="button" id="copyUrlBtn" class="pill" title="复制完整 API 请求 URL">
+            📋 复制调用链接
+          </button>
+          <span class="pill">
+            🔒 密钥仅保存在本地浏览器，不会发送到第三方站点
+          </span>
+        </div>
+        <div class="status" id="status" style="grid-column: 1 / -1;"></div>
+      </form>
+      <div class="url-preview" id="urlPreview">等待输入参数后将自动生成调用链接。</div>
+    </section>
+
+    <section class="card">
+      <div class="result-title">
+        <h2>返回结果</h2>
+        <span class="badge" id="badge">就绪</span>
+      </div>
+      <pre id="result"><code>尚未发送请求。填写参数并点击「调用清单」即可查看响应内容。</code></pre>
+    </section>
+
+    <section class="card">
+      <h2>使用提示</h2>
+      <div class="tips">
+        <div class="tip"><strong>接口地址：</strong> https://api.manifesthub1.filegear-sg.me/manifest</div>
+        <div class="tip"><strong>参数：</strong>apikey（必填）、depotid（必填）、manifestid（必填）</div>
+        <div class="tip"><strong>有效期：</strong> 免费 API Key 有效期 24 小时，到期后需重新申请</div>
+        <div class="tip"><strong>返回格式：</strong> 支持 JSON 返回，可直接保存输出中的 manifest 链接与字段</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const form = document.getElementById('manifest-form');
+    const statusEl = document.getElementById('status');
+    const resultEl = document.getElementById('result');
+    const badgeEl = document.getElementById('badge');
+    const urlPreviewEl = document.getElementById('urlPreview');
+    const copyUrlBtn = document.getElementById('copyUrlBtn');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const baseUrl = 'https://api.manifesthub1.filegear-sg.me/manifest';
+
+    function setBadge(text, tone) {
+      const colors = {
+        idle: { bg: 'rgba(74, 222, 128, 0.12)', border: 'rgba(74, 222, 128, 0.3)', color: '#bbf7d0' },
+        progress: { bg: 'rgba(56, 189, 248, 0.16)', border: 'rgba(56, 189, 248, 0.35)', color: '#bae6fd' },
+        error: { bg: 'rgba(248, 113, 113, 0.14)', border: 'rgba(248, 113, 113, 0.4)', color: '#fecdd3' }
+      };
+      const theme = colors[tone] || colors.idle;
+      badgeEl.textContent = text;
+      badgeEl.style.background = theme.bg;
+      badgeEl.style.borderColor = theme.border;
+      badgeEl.style.color = theme.color;
+    }
+
+    function buildUrl(apiKey, depotId, manifestId) {
+      const params = new URLSearchParams({ apikey: apiKey, depotid: depotId, manifestid: manifestId });
+      return `${baseUrl}?${params.toString()}`;
+    }
+
+    function renderUrlPreview(apiKey, depotId, manifestId) {
+      if (!apiKey || !depotId || !manifestId) {
+        urlPreviewEl.textContent = '等待输入参数后将自动生成调用链接。';
+        return null;
+      }
+      const maskedKey = apiKey.length > 6 ? `${apiKey.slice(0, 3)}…${apiKey.slice(-3)}` : apiKey;
+      const url = buildUrl(apiKey, depotId, manifestId).replace(apiKey, maskedKey);
+      urlPreviewEl.textContent = url;
+      return url;
+    }
+
+    function formatJson(text) {
+      try {
+        const obj = JSON.parse(text);
+        return JSON.stringify(obj, null, 2);
+      } catch (err) {
+        return text || '响应为空';
+      }
+    }
+
+    function setStatus(message, tone = 'muted') {
+      statusEl.textContent = message;
+      if (tone === 'error') {
+        statusEl.style.color = 'var(--error)';
+      } else if (tone === 'success') {
+        statusEl.style.color = 'var(--success)';
+      } else {
+        statusEl.style.color = 'var(--muted)';
+      }
+    }
+
+    function setResult(text) {
+      resultEl.textContent = text;
+    }
+
+    copyUrlBtn.addEventListener('click', async () => {
+      const apiKey = form.apiKey.value.trim();
+      const depotId = form.depotId.value.trim();
+      const manifestId = form.manifestId.value.trim();
+      const url = buildUrl(apiKey, depotId, manifestId);
+      if (!apiKey || !depotId || !manifestId) {
+        setStatus('请输入 API Key、Depot ID 与 Manifest ID 后再复制。', 'error');
+        setBadge('缺少参数', 'error');
+        return;
+      }
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus('已复制完整请求链接，可直接分享给需要调试的同事。', 'success');
+        setBadge('已复制', 'idle');
+      } catch (err) {
+        setStatus('无法复制到剪贴板，请手动复制显示的链接。', 'error');
+        setBadge('复制失败', 'error');
+      }
+    });
+
+    ['apiKey', 'depotId', 'manifestId'].forEach((name) => {
+      form[name].addEventListener('input', () => {
+        renderUrlPreview(form.apiKey.value.trim(), form.depotId.value.trim(), form.manifestId.value.trim());
+      });
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const apiKey = form.apiKey.value.trim();
+      const depotId = form.depotId.value.trim();
+      const manifestId = form.manifestId.value.trim();
+
+      const requestUrl = buildUrl(apiKey, depotId, manifestId);
+      renderUrlPreview(apiKey, depotId, manifestId);
+
+      submitBtn.disabled = true;
+      setBadge('请求中…', 'progress');
+      setStatus('正在请求 ManifestHub API，请稍候…');
+      setResult('');
+
+      try {
+        const response = await fetch(requestUrl, { headers: { Accept: 'application/json' } });
+        const text = await response.text();
+        const formatted = formatJson(text);
+
+        if (!response.ok) {
+          setStatus(`请求失败，状态码 ${response.status}。`, 'error');
+          setBadge('请求失败', 'error');
+        } else {
+          setStatus('请求成功，可在下方查看完整响应。', 'success');
+          setBadge('请求成功', 'idle');
+        }
+        setResult(formatted);
+      } catch (error) {
+        console.error(error);
+        setStatus('网络异常或浏览器阻止了请求，请检查控制台。', 'error');
+        setResult(error.message || '请求未完成。');
+        setBadge('网络错误', 'error');
+      } finally {
+        submitBtn.disabled = false;
+      }
+    });
+
+    setResult('尚未发送请求。填写参数并点击「调用清单」即可查看响应内容。');
+    renderUrlPreview('', '', '');
+  </script>
+</body>
+</html>
