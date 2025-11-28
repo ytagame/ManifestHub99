@@ -17,3 +17,8 @@ Update time: `2025-07-24`
 * API Call Method: `https://api.manifesthub1.filegear-sg.me/manifest?apikey=<API Key>&depotid=<depotid>&manifestid=<manifest id>`
 * 获取API密钥/Get API Key: [https://manifesthub1.filegear-sg.me](https://manifesthub1.filegear-sg.me)
 * 免费API密钥有效期为24小时/Free API Key valid for 24 hours
+
+## 可视化调用页面 / Visual Caller Page
+
+* 直接双击或在本地服务器打开 `index.html`，即可输入 API Key、Depot ID、Manifest ID 调用清单接口。
+* 页面会自动生成请求链接、支持复制，并在下方显示原始响应，便于调试。
